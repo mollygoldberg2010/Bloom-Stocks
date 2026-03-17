@@ -890,15 +890,15 @@ async function analyzeStock() {
         <div class="metrics-row">
           <div class="metric">
             <div class="metric-label">Current Price</div>
-            <div class="metric-value" id="cu-price">$${price.toFixed(2)}</div>
+            <div class="metric-value"><span id="cu-price">$${price.toFixed(2)}</span></div>
           </div>
           <div class="metric">
             <div class="metric-label">${tipIcon('stop-loss')} Stop Loss</div>
-            <div class="metric-value stop" id="cu-stop">$${stopLoss.toFixed(2)}<span class="metric-pct">−${rp.pct}%</span></div>
+            <div class="metric-value stop"><span id="cu-stop">$${stopLoss.toFixed(2)}</span><span class="metric-pct">−${rp.pct}%</span></div>
           </div>
           <div class="metric">
             <div class="metric-label">${tipIcon('target-price')} Target Price</div>
-            <div class="metric-value target" id="cu-target">$${target.toFixed(2)}<span class="metric-pct">+${(rp.pct*2)}%</span></div>
+            <div class="metric-value target"><span id="cu-target">$${target.toFixed(2)}</span><span class="metric-pct">+${rp.pct * 2}%</span></div>
           </div>
           <div class="metric">
             <div class="metric-label">${tipIcon('market-cap')} Market Cap</div>
@@ -950,12 +950,12 @@ async function analyzeStock() {
 
     setTimeout(() => {
       renderAnalyzerChart('main-chart', chartCloses, chartDates, stopLoss, target);
-      const priceEl = document.getElementById('cu-price');
-      const stopEl  = document.getElementById('cu-stop');
+      const priceEl  = document.getElementById('cu-price');
+      const stopEl   = document.getElementById('cu-stop');
       const targetEl = document.getElementById('cu-target');
-      if (priceEl) countUp(priceEl, price, 2, '$', '');
-      if (stopEl)  countUp(stopEl, stopLoss, 2, '$', '<span class="metric-pct">−' + rp.pct + '%</span>');
-      if (targetEl) countUp(targetEl, target, 2, '$', '<span class="metric-pct">+' + (rp.pct*2) + '%</span>');
+      if (priceEl)  countUp(priceEl,  price,    2, '$', '');
+      if (stopEl)   countUp(stopEl,   stopLoss, 2, '$', '');
+      if (targetEl) countUp(targetEl, target,   2, '$', '');
     }, 60);
 
   } catch(e) {

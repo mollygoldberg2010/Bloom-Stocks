@@ -1,0 +1,48 @@
+Add three experience modes to Capra Trader: Beginner, Intermediate, and Pro. Here's exactly how each should work:
+On first visit, show a full-screen welcome modal with the Capra Trader logo and three large clickable cards. Each card has a title, a one-sentence description, and an icon or emoji. The three options are:
+
+🌱 Beginner — 'I've never bought a stock in my life'
+📈 Intermediate — 'I know what stocks are but I'm still learning the details'
+💼 Pro — 'I know my way around charts, ratios, and indicators'
+
+Store the choice in localStorage as capra_mode. Add a small pill in the header showing the current mode (e.g. '🌱 Beginner') that the user can click to switch modes at any time — clicking it reopens the mode selector modal.
+
+BEGINNER MODE — assumes the user knows absolutely nothing about stocks, investing, or finance:
+
+Before the search bar, show this intro text: 'A stock is a tiny piece of ownership in a company. When the company does well, your piece becomes worth more. Type a company name below to get started.'
+Replace the word 'ticker' everywhere with 'company name'
+The search autocomplete should show full company names prominently with the ticker small and gray underneath
+After results load, show a friendly paragraph that reads the results out loud in plain English using the actual numbers — e.g. 'Right now, one share of Apple costs $254.23. If the price drops to $249.15, that is your danger zone — our model suggests selling before it falls that far. We think this stock could reach $264.40 within 6 months, which would be a profit of $10.17 per share if you bought today.'
+Every single metric card must have a plain English label AND a one-sentence explanation directly underneath in small gray text — not hidden in a tooltip. For example: 'Safety Net Price — This is the lowest price you should let it reach before selling to protect yourself from bigger losses.'
+Remove P/E ratio, market cap, volume, and volatility from the results entirely — too advanced
+The Stock Picker intro should say: 'Not sure what to buy? Answer 2 quick questions and we will find some stocks that might work for you based on how long you want to wait and how much risk you are comfortable with.'
+After picker results load, show a section called 'How did we pick these?' that explains in simple terms: 'We looked at 40 companies and measured two things: how much their stock price grew recently, and how bumpy the ride was. We found the ones with the best growth and the smoothest ride for your risk level.'
+Include a slide-out Glossary panel (accessible from a 'What does this mean?' button) with these terms defined in one plain sentence each: Stock, Share, Portfolio, Risk, Stop Loss, Target Price, Bull Market, Bear Market, Dividend, Index
+
+
+INTERMEDIATE MODE — assumes the user knows what stocks are but not technical ratios:
+
+Use standard labels like 'Stop Loss' and 'Target Price' but include a short one-line explanation underneath each metric in small gray text
+Show current price, stop loss, target price, 52-week high and low, and market cap — but label market cap as 'Company Size' with a note like 'Total value of all shares combined'
+Skip P/E ratio and volatility score — too technical
+The plain-English walkthrough paragraph is optional and hidden behind a 'Explain these results to me' toggle button
+Stock Picker shows the algorithm score and a one-sentence rationale per pick
+No glossary button needed but tooltips should appear on hover for any term that might be unfamiliar
+
+
+PRO MODE — full technical experience, no hand-holding:
+
+Compact layout with all metrics visible at once: current price, stop loss, target price, P/E ratio, market cap, volume, 52-week high/low, daily change
+No explanations underneath metrics
+Stock Picker shows full algorithm breakdown: avg return, volatility, risk sensitivity score, final score out of 100
+No glossary, no tooltips, no plain-English walkthrough
+Charts are more detailed
+
+
+Implementation notes:
+
+The mode should affect EVERY part of the UI — labels, explanations, layout density, and which metrics are shown
+Make sure the mode switching is smooth — when a user changes mode the current results should re-render in the new mode without needing to search again
+The welcome modal should be beautiful and match the existing Capra Trader color palette: background #f9f4f2, heading color #deb2a9, input color #fbe2d0, primary #dfb38a, font Poppins
+The modal should not be dismissable without choosing a mode on first visit
+All three modes should feel polished and intentional, not like an afterthought

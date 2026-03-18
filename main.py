@@ -161,10 +161,11 @@ def picks():
                     continue
                 current_price = float(prices.iloc[-1])
                 lb = min(lookback_default, len(prices) - 1)
+                daily_rets = prices.pct_change().dropna()
                 ret = float((prices.iloc[-1] / prices.iloc[-lb] - 1) * 100)
-                vol = float(prices.pct_change().std() * 100)
+                vol = float(daily_rets.std() * 100)
                 score = ret - (vol * risk_sensitivity)
-                scored.append((ticker, current_price, ret, vol, score, lb))
+                scored.append((ticker, current_price, ret, vol, score, lb, daily_rets))
             except Exception:
                 continue
 
@@ -175,24 +176,54 @@ def picks():
         top3 = scored[:3]
 
         result_picks = []
-        for ticker, price, ret, vol, raw_score, lb in top3:
+        for ticker, price, ret, vol, raw_score, lb, daily_rets in top3:
             stop = round(price * (1 - stop_pct), 2)
             target = round(price * (1 + target_pct), 2)
             normalized = min(99, max(45, int(60 + raw_score * 1.5)))
+
+            # --- Analytics ---
+            avg_daily = float(daily_rets.mean() * 100)
+            avg_weekly = round(avg_daily * 5, 2)
+            lb_rets = daily_rets.iloc[-lb:] if len(daily_rets) >= lb else daily_rets
+            pct_positive = float((lb_rets > 0).mean() * 100)
+
+            vol_label = 'Low' if vol < 1.5 else ('Medium' if vol < 3.0 else 'High')
+            trend = 'Rising' if ret > 5 else ('Falling' if ret < -5 else 'Flat')
+            confidence = 'Strong' if pct_positive > 56 else ('Moderate' if pct_positive >= 50 else 'Weak')
+
+            weeks = max(1, lb // 5)
+            period_str = f"{weeks} week{'s' if weeks != 1 else ''}"
+            move_word  = 'grew' if ret > 0 else 'declined'
+            swing_word = 'low' if vol_label == 'Low' else ('moderate' if vol_label == 'Medium' else 'elevated')
+            trend_word = 'rising' if trend == 'Rising' else ('flat' if trend == 'Flat' else 'declining')
+            fit_word   = 'strong' if raw_score > 5 else ('solid' if raw_score > 0 else 'speculative')
+            company = NAME_MAP.get(ticker, ticker)
+
+            rationale = (
+                f"{company} {move_word} {abs(round(ret, 1))}% over the past {period_str} with "
+                f"{swing_word} price swings ({round(vol, 1)}% daily volatility). "
+                f"Its price trend has been {trend_word}, with {round(pct_positive, 0):.0f}% of "
+                f"trading days moving positively — making it a {fit_word} fit for a {risk} strategy."
+            )
+
             result_picks.append({
                 'ticker': ticker,
-                'companyName': NAME_MAP.get(ticker, ticker),
+                'companyName': company,
                 'sector': SECTOR_MAP.get(ticker, 'Unknown'),
                 'price': round(price, 2),
                 'changePct': round(ret / max(lb, 1), 2),
                 'stopLoss': stop,
                 'targetPrice': target,
                 'score': normalized,
-                'rationale': (
-                    f"{round(ret, 1)}% return over the past {lb} trading days with "
-                    f"{round(vol, 2)}% daily volatility — a "
-                    f"{'strong' if raw_score > 5 else 'solid'} fit for a {risk} strategy."
-                ),
+                'rationale': rationale,
+                'avgWeeklyReturn': avg_weekly,
+                'volatility': round(vol, 2),
+                'volatilityLabel': vol_label,
+                'trendDirection': trend,
+                'consistency': round(pct_positive, 1),
+                'confidence': confidence,
+                'totalReturn': round(ret, 1),
+                'lookbackDays': lb,
             })
 
         return jsonify({'picks': result_picks})

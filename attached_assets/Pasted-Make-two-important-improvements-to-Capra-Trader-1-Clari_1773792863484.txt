@@ -1,0 +1,13 @@
+Make two important improvements to Capra Trader:
+1) Clarify the app's purpose everywhere:
+
+On the welcome/mode selection screen, add a clear one-paragraph mission statement above the three mode cards: 'Capra Trader is a research tool to help you explore the stock market. It does not manage your money or guarantee returns — it helps you understand your options, learn how stocks work, and discover investments that might match your goals and risk tolerance. Think of it as a smart starting point for your own research.'
+Add a subtle tagline under the logo in the header that changes based on mode: Beginner: 'Your guide to understanding stocks' — Intermediate: 'Research smarter, invest with confidence' — Pro: 'Data-driven stock analysis'
+In the Stock Picker, add a one-line description at the top: 'This tool scores stocks based on recent growth and price stability to surface options worth researching — not financial advice.'
+
+2) Add detailed reasoning and risk analysis to every stock pick:
+
+In the Stock Picker results, expand each pick card to include a 'Why this pick?' section that explains in plain English specific to that stock: what its recent price trend looked like, how stable/volatile it has been, and why it scored well for the chosen risk level and holding period. Use the actual algorithm values to generate this — e.g. 'AAPL grew an average of 0.8% per week over the past 3 months with relatively low price swings, making it a strong fit for a conservative strategy.'
+Add a 'Risk Analysis' section per pick with three simple indicators shown as colored pills: Volatility (Low / Medium / High), Trend (Rising / Flat / Falling), Confidence (Strong / Moderate / Weak). Calculate these from the actual yfinance data — volatility from std dev, trend from avg return, confidence from how consistent the returns were.
+In Beginner mode, explain each risk indicator in one sentence. In Intermediate mode just show the label and value. In Pro mode show the actual numbers behind each indicator.
+Update the backend /api/picks endpoint to return these additional fields: avgReturn, volatility, consistency, trend direction, and a plain-English rationale string generated from those values.

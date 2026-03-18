@@ -540,6 +540,59 @@ aside {
 @media (max-width: 400px) {
   .form-row-3 { grid-template-columns: 1fr; }
 }
+
+/* ---- MODE MISSION STATEMENT ---- */
+.mode-mission {
+  font-size: 12.5px; color: var(--text); line-height: 1.75;
+  text-align: center; max-width: 520px; margin: 0 auto 24px;
+  padding: 14px 18px; background: rgba(223,179,138,0.1);
+  border-radius: 12px; border: 1px solid var(--border);
+}
+
+/* ---- PICKER DISCLAIMER ---- */
+.picker-disclaimer {
+  font-size: 11.5px; color: var(--text-light); font-style: italic;
+  margin-bottom: 20px; padding: 10px 16px;
+  background: rgba(223,179,138,0.1); border-radius: 10px;
+  border: 1px solid var(--border); line-height: 1.6;
+}
+
+/* ---- WHY THIS PICK ---- */
+.why-pick { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.why-pick-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.9px; color: var(--heading); margin-bottom: 7px;
+}
+.why-pick-text { font-size: 11px; color: var(--text); line-height: 1.65; }
+
+/* ---- RISK ANALYSIS ---- */
+.risk-analysis { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.risk-analysis-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.9px; color: var(--text-light); margin-bottom: 9px;
+}
+.risk-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.risk-pill {
+  font-size: 10.5px; font-weight: 500; padding: 4px 10px;
+  border-radius: 20px; white-space: nowrap;
+}
+.risk-pill strong { font-weight: 700; }
+
+.pill-low, .pill-rising, .pill-strong {
+  background: rgba(122,184,158,0.16); color: #3c886a;
+}
+.pill-medium, .pill-flat, .pill-moderate {
+  background: rgba(223,179,138,0.22); color: #9a6e3a;
+}
+.pill-high, .pill-falling, .pill-weak {
+  background: rgba(212,132,122,0.18); color: #b55b52;
+}
+
+/* ---- BEGINNER RISK INDICATORS ---- */
+.ri-item { margin-bottom: 9px; }
+.ri-item:last-child { margin-bottom: 0; }
+.ri-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
+.ri-explain { font-size: 10.5px; color: var(--text-light); line-height: 1.5; padding-left: 2px; }
 </style>
 </head>
 <body>
@@ -550,6 +603,9 @@ aside {
     <button class="mode-modal-close" id="mode-modal-close" onclick="closeModeModal()">✕</button>
     <div class="mode-modal-logo">capra <em>trader</em></div>
     <div class="mode-modal-title">How would you describe your investing experience?</div>
+    <div class="mode-mission">
+      Capra Trader is a research tool to help you explore the stock market. It does not manage your money or guarantee returns — it helps you understand your options, learn how stocks work, and discover investments that might match your goals and risk tolerance. Think of it as a smart starting point for your own research.
+    </div>
     <div class="mode-cards">
       <div class="mode-card" onclick="selectMode('beginner')">
         <div class="mode-card-icon">🌱</div>
@@ -610,7 +666,7 @@ aside {
   <header>
     <div class="brand">
       <div class="logo">capra <em>trader</em></div>
-      <div class="tagline">intelligent investing, beautifully simplified</div>
+      <div class="tagline" id="tagline">intelligent investing, beautifully simplified</div>
     </div>
     <button class="mode-pill" id="mode-pill" onclick="openModeModal(false)">🌱 Beginner</button>
   </header>
@@ -658,6 +714,7 @@ aside {
     <!-- PICKER PANEL -->
     <div id="picker" class="panel">
       <div id="picker-intro" class="picker-intro" style="display:none;"></div>
+      <div class="picker-disclaimer">This tool scores stocks based on recent growth and price stability to surface options worth researching — not financial advice.</div>
       <div class="form-row" id="picker-form-row">
         <div class="form-group">
           <label>Holding Period</label>
@@ -811,6 +868,17 @@ function applyMode(mode, rerender) {
 
   // Pill
   document.getElementById('mode-pill').textContent = m.emoji + ' ' + m.label;
+
+  // Tagline
+  const taglineEl = document.getElementById('tagline');
+  if (taglineEl) {
+    const taglines = {
+      beginner:     'Your guide to understanding stocks',
+      intermediate: 'Research smarter, invest with confidence',
+      pro:          'Data-driven stock analysis',
+    };
+    taglineEl.textContent = taglines[mode] || 'intelligent investing, beautifully simplified';
+  }
 
   // Beginner intro
   document.getElementById('beginner-intro').style.display = mode === 'beginner' ? 'block' : 'none';
@@ -1484,6 +1552,80 @@ function renderPickResults(picks, risk) {
   }, 60);
 }
 
+// ---- RISK PILL HELPERS ----
+const VOL_EXPLAINS = {
+  'Low':    "This stock's price moves gently — less likely to surprise you.",
+  'Medium': "This stock has normal price swings — expect some ups and downs.",
+  'High':   "This stock can move a lot — bigger chances of big gains or losses."
+};
+const TREND_EXPLAINS = {
+  'Rising':  "The price has been going up recently — a positive sign.",
+  'Flat':    "The price has been mostly sideways — neither clearly rising nor falling.",
+  'Falling': "The price has been dropping — something to be cautious about."
+};
+const CONF_EXPLAINS = {
+  'Strong':   "Most recent trading days were positive — the trend is consistent.",
+  'Moderate': "The trend has been somewhat consistent but had some mixed days.",
+  'Weak':     "Returns have been uneven — some days up, some days down."
+};
+
+function riskAnalysisHTML(s) {
+  const vLabel = s.volatilityLabel || 'Medium';
+  const trend  = s.trendDirection  || 'Flat';
+  const conf   = s.confidence      || 'Moderate';
+  const cls    = v => v.toLowerCase();
+
+  if (capra_mode === 'beginner') {
+    return `
+    <div class="risk-analysis">
+      <div class="risk-analysis-title">Risk Analysis</div>
+      <div class="ri-item">
+        <div class="ri-row">
+          <div class="risk-pill pill-${cls(vLabel)}">Volatility: <strong>${vLabel}</strong></div>
+        </div>
+        <div class="ri-explain">${VOL_EXPLAINS[vLabel] || ''}</div>
+      </div>
+      <div class="ri-item">
+        <div class="ri-row">
+          <div class="risk-pill pill-${cls(trend)}">Trend: <strong>${trend}</strong></div>
+        </div>
+        <div class="ri-explain">${TREND_EXPLAINS[trend] || ''}</div>
+      </div>
+      <div class="ri-item">
+        <div class="ri-row">
+          <div class="risk-pill pill-${cls(conf)}">Confidence: <strong>${conf}</strong></div>
+        </div>
+        <div class="ri-explain">${CONF_EXPLAINS[conf] || ''}</div>
+      </div>
+    </div>`;
+  }
+
+  if (capra_mode === 'pro') {
+    const ret = s.totalReturn !== undefined ? s.totalReturn : (s.changePct || 0);
+    const retSign = ret >= 0 ? '+' : '';
+    return `
+    <div class="risk-analysis">
+      <div class="risk-analysis-title">Risk Analysis</div>
+      <div class="risk-pills">
+        <div class="risk-pill pill-${cls(vLabel)}">Volatility: <strong>${vLabel}</strong> (σ ${s.volatility}%/day)</div>
+        <div class="risk-pill pill-${cls(trend)}">Trend: <strong>${trend}</strong> (${retSign}${ret}% total)</div>
+        <div class="risk-pill pill-${cls(conf)}">Confidence: <strong>${conf}</strong> (${s.consistency}% +days)</div>
+      </div>
+    </div>`;
+  }
+
+  // Intermediate
+  return `
+  <div class="risk-analysis">
+    <div class="risk-analysis-title">Risk Analysis</div>
+    <div class="risk-pills">
+      <div class="risk-pill pill-${cls(vLabel)}">Volatility: <strong>${vLabel}</strong></div>
+      <div class="risk-pill pill-${cls(trend)}">Trend: <strong>${trend}</strong></div>
+      <div class="risk-pill pill-${cls(conf)}">Confidence: <strong>${conf}</strong></div>
+    </div>
+  </div>`;
+}
+
 function buildPickCard(s, i, risk) {
   const rp = RISK_PARAMS[risk] || RISK_PARAMS.moderate;
 
@@ -1499,12 +1641,17 @@ function buildPickCard(s, i, risk) {
         <span class="target-label">Goal: $${s.targetPrice.toFixed(2)}</span>
       </div>
       <div class="mini-chart"><canvas id="mini-${i}"></canvas></div>
-      <div class="pick-rationale">${s.rationale}</div>
+      <div class="why-pick">
+        <div class="why-pick-title">Why this pick?</div>
+        <div class="why-pick-text">${s.rationale}</div>
+      </div>
+      ${riskAnalysisHTML(s)}
       <button class="pick-add-btn" onclick="addPickToPortfolio('${s.ticker}', ${s.price})">+ Add to My Portfolio</button>
     </div>`;
   }
 
   if (capra_mode === 'pro') {
+    const ret = s.totalReturn !== undefined ? s.totalReturn : (s.changePct || 0);
     return `
     <div class="pick-card">
       <div class="pick-rank">Rank #${i + 1}</div>
@@ -1517,13 +1664,14 @@ function buildPickCard(s, i, risk) {
       </div>
       <div class="mini-chart"><canvas id="mini-${i}"></canvas></div>
       <div class="score-bar"><div class="score-fill" id="score-fill-${i}"></div></div>
-      <div class="score-text">Score ${s.score}/100</div>
+      <div class="score-text" data-tip="algo-score">Score ${s.score}/100</div>
       <div class="pro-breakdown">
-        <strong>Return:</strong> ${s.changePct >= 0 ? '+' : ''}${s.changePct}% &nbsp;
-        <strong>Vol:</strong> ${(s.score > 75 ? 'Low' : s.score > 55 ? 'Med' : 'High')} &nbsp;
+        <strong>Return:</strong> ${ret >= 0 ? '+' : ''}${ret}% &nbsp;
+        <strong>Avg/wk:</strong> ${s.avgWeeklyReturn >= 0 ? '+' : ''}${s.avgWeeklyReturn}% &nbsp;
         <strong>R-adj:</strong> ${rp.sensitivity}x &nbsp;
-        <strong>Final:</strong> ${s.score}/100
+        <strong>LB:</strong> ${s.lookbackDays}d
       </div>
+      ${riskAnalysisHTML(s)}
       <button class="pick-add-btn" onclick="addPickToPortfolio('${s.ticker}', ${s.price})">+ Add to Portfolio</button>
     </div>`;
   }
@@ -1542,7 +1690,11 @@ function buildPickCard(s, i, risk) {
     <div class="mini-chart"><canvas id="mini-${i}"></canvas></div>
     <div class="score-bar"><div class="score-fill" id="score-fill-${i}"></div></div>
     <div class="score-text" data-tip="algo-score">Algorithm Score: ${s.score}/100</div>
-    <div class="pick-rationale">${s.rationale}</div>
+    <div class="why-pick">
+      <div class="why-pick-title">Why this pick?</div>
+      <div class="why-pick-text">${s.rationale}</div>
+    </div>
+    ${riskAnalysisHTML(s)}
     <button class="pick-add-btn" onclick="addPickToPortfolio('${s.ticker}', ${s.price})">+ Add to Portfolio</button>
   </div>`;
 }

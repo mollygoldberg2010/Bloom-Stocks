@@ -1260,9 +1260,9 @@ function renderAnalyzerResults(data) {
   if (capra_mode === 'beginner') {
     html = buildAnalyzerBeginner(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct, data.beginnerOutlook, data.outlookPara);
   } else if (capra_mode === 'pro') {
-    html = buildAnalyzerPro(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct);
+    html = buildAnalyzerPro(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct, data.beginnerOutlook, data.outlookPara);
   } else {
-    html = buildAnalyzerIntermediate(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct);
+    html = buildAnalyzerIntermediate(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct, data.beginnerOutlook, data.outlookPara);
   }
 
   const resultsEl = document.getElementById('analyzer-results');
@@ -1352,7 +1352,7 @@ function stockHeaderHTML(ticker, q, price, changeSign, changeClass, rp) {
    </div>`;}
 
 // INTERMEDIATE results
-function buildAnalyzerIntermediate(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct) {
+  function buildAnalyzerIntermediate(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct, beginnerOutlook, outlookPara) {
   const profit = (target - price).toFixed(2);
   const company = q.companyName || ticker;
   return `
@@ -1407,12 +1407,16 @@ function buildAnalyzerIntermediate(ticker, q, rp, price, stopLoss, target, chang
       Using a ${rp.label.toLowerCase()} strategy, the suggested stop loss is <strong>$${stopLoss.toFixed(2)}</strong> — if it falls there, sell to limit your loss to ${rp.pct}%.
       The target price is <strong>$${target.toFixed(2)}</strong>, a potential gain of <strong>$${profit}</strong> per share — a 2:1 reward-to-risk ratio.
       ${q.marketCap ? `The company has a total market value of ${fmtCap(q.marketCap)}.` : ''}
-    </div>
-  </div>`;
-}
+  </div>
+      <div class="insight-box" style="margin-top:18px;border-left-color:var(--target-color);">
+        <div class="insight-title" style="color:var(--target-color);">Stock Outlook</div>
+        <p>${outlookPara || ''}</p>
+      </div>
+    </div>`;
+  }
 
-// PRO results
-function buildAnalyzerPro(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct) {
+  // PRO results
+  function buildAnalyzerPro(ticker, q, rp, price, stopLoss, target, changeSign, changeClass, w52pct, beginnerOutlook, outlookPara) {
   return `
   <div class="results-card">
     ${stockHeaderHTML(ticker, q, price, changeSign, changeClass, rp)}
@@ -1458,11 +1462,15 @@ function buildAnalyzerPro(ticker, q, rp, price, stopLoss, target, changeSign, ch
         ${q.peRatio ? `P/E ${q.peRatio.toFixed(1)}x.` : ''}
         ${q.week52High && q.week52Low ? `52W: $${q.week52Low.toFixed(2)}–$${q.week52High.toFixed(2)}.` : ''}
       </p>
-    </div>
-  </div>`;
-}
+  </div>
+      <div class="insight-box" style="margin-top:18px;border-left-color:var(--target-color);">
+        <div class="insight-title" style="color:var(--target-color);">Stock Outlook</div>
+        <p>${outlookPara || ''}</p>
+      </div>
+    </div>`;
+  }
 
-// ---- CUSTOM PERIOD ----
+  // ---- CUSTOM PERIOD ----
 function onHoldingPeriodChange() {
   const val = document.getElementById('holding-period').value;
   const wrap = document.getElementById('custom-period-wrap');

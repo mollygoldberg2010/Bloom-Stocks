@@ -1,10 +1,10 @@
-# Capra Trader
+# Bloom Stocks
 
 A stock analysis and picker web application backed by a Python Flask API using live market data.
 
 ## Overview
 
-Capra Trader provides:
+Bloom Stocks provides:
 - **Stock Analyzer** — Enter any ticker for real-time price, stop-loss/target, P/E ratio, market cap, 52-week range, volume, and a 6-month price chart
 - **Stock Picker** — Momentum-scored picks (top 3) based on holding period and risk tolerance, with custom duration support
 - **Portfolio** — Track holdings with live gain/loss tracking, stored in localStorage

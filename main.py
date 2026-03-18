@@ -241,7 +241,7 @@ def search():
             f'https://query2.finance.yahoo.com/v1/finance/search'
             f'?q={q}&quotesCount=8&newsCount=0&enableFuzzyQuery=false'
         )
-        headers = {'User-Agent': 'Mozilla/5.0 (compatible; CapraTrader/1.0)'}
+        headers = {'User-Agent': 'Mozilla/5.0 (compatible; BloomStocks/1.0)'}
         resp = req_lib.get(url, headers=headers, timeout=5)
         data = resp.json()
         quotes = data.get('quotes', [])

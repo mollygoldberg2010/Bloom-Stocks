@@ -751,6 +751,7 @@ aside {
       <div style="margin-bottom:20px;">
         <div style="font-size:15px;font-weight:700;color:var(--heading);margin-bottom:4px;">Day Trading Picks</div>
         <div style="font-size:11px;color:var(--text-light);" id="dt-subtitle">Stocks showing overnight moves, multi-day momentum, and unusual volume</div>
+        <div id="dt-blurb" style="display:none;margin-top:16px;padding:16px 20px;background:linear-gradient(135deg,rgba(251,226,208,0.45),rgba(249,244,242,0.65));border-radius:13px;border-left:3px solid var(--heading);font-size:12.5px;color:var(--text);line-height:1.75;"></div>
       </div>
       <div id="daytrading-results">
         <div style="font-size:13px;color:var(--text-light);text-align:center;padding:48px;">Loading momentum data…</div>
@@ -945,7 +946,19 @@ function applyMode(mode, rerender) {
   } else {
     pickerIntro.style.display = 'none';
   }
-
+  // Day trading blurb
+  const dtBlurb = document.getElementById('dt-blurb');
+  if (dtBlurb) {
+    if (mode === 'beginner') {
+      dtBlurb.innerHTML = '<strong>What is day trading?</strong> Day trading means buying a stock and selling it quickly — sometimes within hours or days — to profit from short-term price moves. It is riskier than long-term investing because stock prices can swing fast. The stocks below are showing signals that something is happening right now: a big overnight jump, several days of gains in a row, or unusually high trading activity. Use these as a starting point for your own research — not as guaranteed tips.';
+      dtBlurb.style.display = 'block';
+    } else if (mode === 'intermediate') {
+      dtBlurb.innerHTML = '<strong>Day Trading Picks</strong> — these stocks are flagged based on three momentum signals: overnight price change from the prior close, multi-day winning streaks, and volume spikes above their 5-day average. Stocks are scored and ranked by combined signal strength. Click any card to run a full analysis.';
+      dtBlurb.style.display = 'block';
+    } else {
+      dtBlurb.style.display = 'none';
+    }
+  }
   // Re-render if mode changed and data exists
   if (rerender) {
     if (lastAnalysis) renderAnalyzerResults(lastAnalysis);

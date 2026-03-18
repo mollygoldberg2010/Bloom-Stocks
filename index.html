@@ -678,6 +678,7 @@ aside {
       <button class="tab active" data-tab="analyzer" onclick="switchTab('analyzer')">Stock Analyzer</button>
       <button class="tab" data-tab="picker" onclick="switchTab('picker')">Stock Picker</button>
       <button class="tab" data-tab="portfolio" onclick="switchTab('portfolio')">Portfolio</button>
+      <button class="tab" data-tab="heatmap" onclick="switchTab('heatmap')">Market Map</button>
     </div>
 
     <!-- ANALYZER PANEL -->
@@ -770,8 +771,23 @@ aside {
       <div id="portfolio-summary"></div>
     </div>
 
-  </main>
-
+  
+  <!-- HEATMAP PANEL -->
+  <div id="heatmap" class="panel">
+    <div style="margin-bottom:20px;">
+      <div style="font-size:15px;font-weight:700;color:var(--heading);margin-bottom:4px;">Market Heatmap</div>
+      <div style="font-size:11px;color:var(--text-light);">Sized by market cap · colored by today's performance · click any stock to analyze it</div>
+    </div>
+    <div id="heatmap-container" style="width:100%;background:var(--card-bg);border-radius:16px;border:1px solid var(--border);padding:16px;box-shadow:0 4px 24px var(--shadow);min-height:500px;display:flex;align-items:center;justify-content:center;">
+      <div id="heatmap-loading" style="font-size:13px;color:var(--text-light);">Loading market data…</div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text-light);display:flex;gap:16px;align-items:center;">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#7ab89e;display:inline-block;"></span> Gaining</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#d4847a;display:inline-block;"></span> Declining</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:3px;background:#b89b8e;display:inline-block;"></span> Flat</span>
+    </div>
+  </div>
+    </main>
   <!-- SIDEBAR -->
   <aside>
     <div class="sidebar-title">Market Movers</div>
@@ -800,10 +816,14 @@ aside {
     <span>Portfolio</span>
   </button>
   <button class="bnav-btn" id="bnav-movers" onclick="openMoverSheet()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-    <span>Movers</span>
-  </button>
-</nav>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <span>Movers</span>
+    </button>
+    <button class="bnav-btn" id="bnav-heatmap" onclick="switchTab('heatmap')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>Map</span>
+    </button>
+  </nav>
 
 <script>
 // ---- CONFIG ----
@@ -983,6 +1003,7 @@ function switchTab(tabId) {
   if (bnavBtn) bnavBtn.classList.add('active');
   document.getElementById(tabId).classList.add('active');
   if (tabId === 'portfolio') loadPortfolio();
+  if (tabId === 'heatmap') loadHeatmap();
 }
 
 // ---- MOBILE MOVERS SHEET ----
@@ -1846,7 +1867,90 @@ function renderMoversTo(upId, downId, data) {
     downEl.innerHTML += `<div class="mover-item"><div><div class="mover-ticker">${m.t}</div><div class="mover-name">${m.n}</div></div><span class="mover-change down">${m.c}</span></div>`;
   });
 }
+  // ---- HEATMAP ----
+  let heatmapLoaded = false;
+  let heatmapChart = null;
 
+  async function loadHeatmap() {
+    if (heatmapLoaded) return;
+    const container = document.getElementById('heatmap-container');
+    const loading = document.getElementById('heatmap-loading');
+    try {
+      const res = await fetch('/api/heatmap');
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      heatmapLoaded = true;
+      loading.style.display = 'none';
+      renderHeatmap(data.stocks, container);
+    } catch(e) {
+      loading.textContent = 'Could not load market data. Please try again.';
+    }
+  }
+
+  function renderHeatmap(stocks, container) {
+    const sectors = {};
+    stocks.forEach(s => {
+      if (!sectors[s.sector]) sectors[s.sector] = [];
+      sectors[s.sector].push(s);
+    });
+
+    const SECTOR_COLORS = {
+      'Technology': '#e8d5f0', 'Consumer': '#fbe2d0',
+      'Healthcare': '#d5eee8', 'Finance': '#d5e8f0',
+      'Energy': '#f0e8d5', 'Industrials': '#e8f0d5',
+      'Communication': '#f0d5e8',
+    };
+
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;width:100%;">';
+
+    Object.entries(sectors).forEach(([sector, sectorStocks]) => {
+      const color = SECTOR_COLORS[sector] || '#efeae7';
+      html += `<div style="background:${color};border-radius:10px;padding:10px 12px;">`;
+      html += `<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:8px;">${sector}</div>`;
+      html += '<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+
+      sectorStocks.sort((a, b) => b.weight - a.weight).forEach(s => {
+        const chg = s.changePct;
+        const absChg = Math.abs(chg);
+        let bg, textColor;
+        if (chg > 2)       { bg = '#3d8c6e'; textColor = 'white'; }
+        else if (chg > 0)  { bg = '#7ab89e'; textColor = 'white'; }
+        else if (chg > -2) { bg = '#d4847a'; textColor = 'white'; }
+        else               { bg = '#b84f44'; textColor = 'white'; }
+        if (absChg < 0.3)  { bg = '#a89080'; textColor = 'white'; }
+
+        const size = Math.max(60, Math.min(130, s.weight * 1.1));
+        const sign = chg >= 0 ? '+' : '';
+
+        html += `<div onclick="analyzeFromMap('${s.ticker}')"
+          style="width:${size}px;min-height:${size * 0.7}px;background:${bg};border-radius:8px;
+                 padding:8px;cursor:pointer;display:flex;flex-direction:column;
+                 align-items:center;justify-content:center;transition:transform 0.15s,opacity 0.15s;
+                 box-shadow:0 1px 4px rgba(0,0,0,0.12);"
+          onmouseover="this.style.transform='scale(1.06)';this.style.opacity='0.92'"
+          onmouseout="this.style.transform='scale(1)';this.style.opacity='1'">
+          <div style="font-size:${size > 90 ? 12 : 10}px;font-weight:700;color:${textColor};text-align:center;">${s.ticker}</div>
+          <div style="font-size:${size > 90 ? 11 : 9}px;color:${textColor};opacity:0.85;text-align:center;margin-top:2px;">${sign}${chg.toFixed(1)}%</div>
+        </div>`;
+      });
+
+      html += '</div></div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function analyzeFromMap(ticker) {
+    document.getElementById('ticker-input').value = ticker;
+    switchTab('analyzer');
+    setTimeout(() => {
+      const risk = document.getElementById('risk-analyzer').value;
+      if (!risk) document.getElementById('risk-analyzer').value = 'moderate';
+      analyzeStock();
+    }, 100);
+  }
 async function renderSidebar() {
   const upEl   = document.getElementById('movers-up');
   const downEl = document.getElementById('movers-down');
